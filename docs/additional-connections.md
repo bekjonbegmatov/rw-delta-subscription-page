@@ -26,11 +26,24 @@ append/replace, порядок, проверка выбора правил. Вс
 правила объединяются по порядку; хотя бы один replace исключает исходные
 подключения. Новые правила выключены. DISABLED выбирается явно.
 
-Поддерживаются VLESS URI (TCP/RAW, WS, gRPC, TLS/Reality, encryption=none) в plain
-и Base64 ответах; для Xray JSON они преобразуются в отдельные профили с локальным
-SOCKS inbound 127.0.0.1:10808. Полные Xray JSON-профили (объект с outbounds или
-массив) применяются только к Xray JSON. Неизвестные параметры VLESS отклоняются;
-сложный транспорт требует готового JSON. Sing-box, Clash/Mihomo/Stash,
+URI/Plain/Base64 сохраняют неизвестные параметры без потерь: VLESS, VMess
+(QR JSON и AEAD), Trojan, SS (SIP002/legacy), SSR, Hysteria/2/hy2, TUIC,
+WireGuard/wg, SOCKS/5/5h, HTTP(S) proxy, AnyTLS, SSH, naive+https.
+Эмодзи, кириллица и пробелы в названии после # автоматически URL-кодируются.
+URI не скачиваются и не исполняются. Формат API vless исторический: теперь это URI-список.
+
+В Xray JSON преобразуются VLESS, оба VMess, Trojan, SS без plugin, SOCKS и HTTP(S):
+TCP/RAW/HTTP header, WS, gRPC gun/multi/authority, XHTTP/splithttp с extra,
+HTTPUpgrade, mKCP, legacy h2 и QUIC. TLS/Reality сохраняют pcs/vcn/ech,
+alpn/fp/pbk/sid/spx/pqv; также fm, VLESS encryption/flow.
+Локальный SOCKS inbound — 127.0.0.1:10808. Возможности зависят от версии ядра.
+Неизвестный/непредставимый параметр не выбрасывается из JSON: всё правило
+пропускается для этого формата, но продолжает работать для URI. Другие правила
+продолжают применяться; частично преобразованное replace не удаляет ответ панели.
+allowInsecure=true не преобразуется для современного Xray, где опция удалена.
+Полные Xray JSON-профили (объект с outbounds или массив) передаются напрямую
+только Xray JSON-клиентам. Для нестандартных настроек используйте их.
+Sing-box, Clash/Mihomo/Stash,
 зашифрованные/неизвестные ответы остаются без изменений. Дополнения выдаются
 VPN-приложению, не вставляются в список ключей HTML-страницы.
 
@@ -80,3 +93,8 @@ node --test tests/appearance.test.cjs tests/extras.test.cjs
 
 Это не проверка реального Remnawave/HWID, Caddy или VPN-клиентов. После обновления
 владельцу нужно проверить свои приложения на отдельном тестовом пользователе.
+
+Обновление URI-редактора требует нового кода всех трёх сервисов (Django, Admin V2,
+subpage), но не добавляет миграций, env или зависимостей.
+Сверка: https://github.com/XTLS/Xray-core/discussions/716,
+https://github.com/2dust/v2rayN/wiki/Description-of-VMess-share-link.

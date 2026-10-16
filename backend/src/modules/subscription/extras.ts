@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { z } from 'zod';
 
+import { normalizeUri, proxyProfile, uriLines } from './proxy-uri';
+
 const statuses = z.enum(['ACTIVE', 'EXPIRED', 'LIMITED', 'DISABLED']);
 const ruleSchema = z
     .object({
@@ -94,7 +96,8 @@ function profiles(value: unknown, allowEmpty = false): Profile[] {
                         out &&
                         typeof out === 'object' &&
                         'protocol' in out &&
-                        typeof out.protocol === 'string',
+                        typeof out.protocol === 'string' &&
+                        out.protocol.length > 0,
                 ),
         )
     ) {
@@ -103,143 +106,18 @@ function profiles(value: unknown, allowEmpty = false): Profile[] {
     return array;
 }
 
-export function vlessProfile(line: string): Profile {
-    const url = new URL(line);
-    const p = Object.fromEntries(url.searchParams);
-    const known = [
-        'encryption',
-        'flow',
-        'type',
-        'security',
-        'sni',
-        'fp',
-        'pbk',
-        'sid',
-        'spx',
-        'alpn',
-        'path',
-        'host',
-        'serviceName',
-        'mode',
-        'headerType',
-    ];
-    if (
-        url.protocol !== 'vless:' ||
-        !url.hostname ||
-        !url.port ||
-        Number(url.port) > 65535 ||
-        Number(url.port) < 1 ||
-        !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(url.username) ||
-        url.password ||
-        (url.pathname && url.pathname !== '/') ||
-        /[\s\x00-\x1f]|%(?![0-9a-fA-F]{2})/.test(line) ||
-        /[\x00-\x1f]/.test(decodeURIComponent(url.hash.slice(1))) ||
-        [...url.searchParams].length !== Object.keys(p).length ||
-        Object.keys(p).some((key) => !known.includes(key))
-    )
-        throw new Error('Unsupported VLESS');
-    const network = p.type || 'tcp',
-        security = p.security || 'none';
-    if (
-        !['tcp', 'raw', 'ws', 'grpc'].includes(network) ||
-        !['none', 'tls', 'reality'].includes(security) ||
-        (p.encryption && p.encryption !== 'none') ||
-        (p.headerType && p.headerType !== 'none') ||
-        !['', 'xtls-rprx-vision'].includes(p.flow || '') ||
-        (p.flow && (!['tcp', 'raw'].includes(network) || security === 'none')) ||
-        !['gun', 'multi'].includes(p.mode || 'gun')
-    )
-        throw new Error('Unsupported VLESS');
-    if (
-        (network !== 'ws' && ['path', 'host'].some((key) => key in p)) ||
-        (network !== 'grpc' && ['serviceName', 'mode'].some((key) => key in p)) ||
-        (security !== 'reality' && ['pbk', 'sid', 'spx'].some((key) => key in p)) ||
-        (security !== 'tls' && 'alpn' in p) ||
-        (security === 'none' && ['sni', 'fp'].some((key) => key in p))
-    )
-        throw new Error('Incompatible VLESS parameters');
-    const streamSettings: Record<string, unknown> = {
-        network: network === 'raw' ? 'tcp' : network,
-        security,
-    };
-    if (security === 'reality') {
-        if (
-            network === 'ws' ||
-            !p.sni ||
-            !/^[A-Za-z0-9_-]{43}$/.test(p.pbk || '') ||
-            !/^(?:[a-f0-9]{2}){0,8}$/i.test(p.sid || '')
-        )
-            throw new Error('Invalid Reality');
-        streamSettings.realitySettings = {
-            serverName: p.sni,
-            fingerprint: p.fp || 'chrome',
-            publicKey: p.pbk,
-            shortId: p.sid || '',
-            spiderX: p.spx || '',
-        };
-    } else if (security === 'tls') {
-        streamSettings.tlsSettings = {
-            serverName: p.sni || url.hostname,
-            fingerprint: p.fp || 'chrome',
-            ...(p.alpn ? { alpn: p.alpn.split(',') } : {}),
-        };
-    }
-    if (network === 'ws')
-        streamSettings.wsSettings = {
-            path: p.path || '/',
-            ...(p.host ? { headers: { Host: p.host } } : {}),
-        };
-    if (network === 'grpc')
-        streamSettings.grpcSettings = {
-            serviceName: p.serviceName || '',
-            multiMode: p.mode === 'multi',
-        };
-    return {
-        remarks: decodeURIComponent(url.hash.slice(1)) || 'Дополнительное подключение',
-        inbounds: [
-            {
-                tag: 'socks',
-                listen: '127.0.0.1',
-                port: 10808,
-                protocol: 'socks',
-                settings: { auth: 'noauth', udp: true },
-            },
-        ],
-        outbounds: [
-            {
-                tag: 'proxy',
-                protocol: 'vless',
-                settings: {
-                    vnext: [
-                        {
-                            address: url.hostname.replace(/^\[|\]$/g, ''),
-                            port: Number(url.port),
-                            users: [
-                                {
-                                    id: url.username,
-                                    encryption: 'none',
-                                    ...(p.flow ? { flow: p.flow } : {}),
-                                },
-                            ],
-                        },
-                    ],
-                },
-                streamSettings,
-            },
-        ],
-    };
-}
-
-const uriLines = (text: string) =>
-    text
-        .split(/\r?\n/)
-        .map((s) => s.trim())
-        .filter(Boolean);
+// Legacy export retained for callers; now accepts all convertible proxy protocols.
+export { proxyProfile as vlessProfile } from './proxy-uri';
 const validPanelLines = (lines: string[]) =>
     lines.length > 0 &&
-    lines.every((line) =>
-        /^(vless|vmess|trojan|ss|ssr|hysteria2?|hy2|tuic|wireguard):\/\/[^\s]+$/.test(line),
-    );
+    lines.every((line) => {
+        try {
+            normalizeUri(line);
+            return true;
+        } catch {
+            return false;
+        }
+    });
 
 export function responseFormat(
     body: Buffer,
@@ -290,15 +168,27 @@ export function mergeExtras(
             (format === 'json' || rule.format === 'vless'),
     );
     if (!matched.length) return null;
-    const replace = matched.some((rule) => rule.mode === 'replace');
     try {
+        // Atomic per rule: a partial conversion must never activate replace.
+        // One incompatible rule cannot suppress other valid additions.
+        const applicable = matched.flatMap((rule) => {
+            try {
+                const items =
+                    format === 'json'
+                        ? rule.format === 'vless'
+                            ? uriLines(rule.content).map(proxyProfile)
+                            : profiles(JSON.parse(rule.content))
+                        : uriLines(rule.content).map(normalizeUri);
+                return items.length ? [{ rule, items }] : [];
+            } catch {
+                return [];
+            }
+        });
+        if (!applicable.length) return null;
+        const replace = applicable.some(({ rule }) => rule.mode === 'replace');
         let result: string;
         if (format === 'json') {
-            const extra = matched.flatMap((rule) =>
-                rule.format === 'vless'
-                    ? uriLines(rule.content).map(vlessProfile)
-                    : profiles(JSON.parse(rule.content)),
-            );
+            const extra = applicable.flatMap(({ items }) => items as Profile[]);
             const combined = [
                 ...(replace ? [] : profiles(JSON.parse(body.toString('utf8')), true)),
                 ...extra,
@@ -308,8 +198,7 @@ export function mergeExtras(
             ];
             result = JSON.stringify(unique);
         } else {
-            const extra = matched.flatMap((rule) => uriLines(rule.content));
-            extra.forEach(vlessProfile); // Same strict validation for URI and JSON deliveries.
+            const extra = applicable.flatMap(({ items }) => items as string[]);
             const original =
                 format === 'base64'
                     ? Buffer.from(body.toString('utf8'), 'base64').toString('utf8')

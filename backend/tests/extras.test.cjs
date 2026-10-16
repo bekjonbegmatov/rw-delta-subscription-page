@@ -195,12 +195,7 @@ test('unsupported, encrypted, invalid, HTML, YAML and sing-box are untouched', (
     assert.equal(responseFormat(base64(primary), { 'content-type': 'text/html' }), null);
 });
 test('malformed additions never damage panel response', () => {
-    for (const content of [
-        'not a key',
-        extra.replace('type=tcp', 'type=xhttp'),
-        extra.replace('type=tcp', 'type=tcp&unknown=true'),
-        extra.replace('pbk=AAA', 'pbk='),
-    ]) {
+    for (const content of ['not a key', extra.replace(':443', ':99999'), extra + '%0A']) {
         assert.equal(
             mergeExtras(
                 base64(primary),
@@ -211,6 +206,61 @@ test('malformed additions never damage panel response', () => {
             null,
         );
     }
+});
+
+const { normalizeUri, proxyProfile } = require('../src/modules/subscription/proxy-uri.ts');
+const fixtures = require('./fixtures/proxy-uris.json');
+test('shared URI fixtures: lossless admission and conservative conversion', () => {
+    for (const fixture of fixtures.valid) {
+        assert.equal(normalizeUri(fixture.input), fixture.normalized, fixture.name);
+        if (fixture.convert) {
+            const profile = proxyProfile(fixture.input);
+            assert.equal(profile.inbounds[0].listen, '127.0.0.1', fixture.name);
+        } else assert.throws(() => proxyProfile(fixture.input), fixture.name);
+    }
+    for (const input of fixtures.invalid) assert.throws(() => normalizeUri(input));
+});
+test('PCS, ECH, XHTTP extra, raw plus and encoded passwords survive conversion', () => {
+    const profile = proxyProfile(
+        fixtures.valid.find((f) => f.name === 'certificate-pinning').input,
+    );
+    const tls = profile.outbounds[0].streamSettings.tlsSettings;
+    assert.equal(tls.pinnedPeerCertSha256, Array(32).fill('AA').join(':'));
+    assert.equal(tls.verifyPeerCertByName, 'cert.example.invalid');
+    assert.equal(tls.echConfigList, 'A+B');
+    assert.equal(tls.fingerprint, 'qq');
+    assert.equal(profile.remarks, ' LTE');
+    const xhttp = proxyProfile(fixtures.valid.find((f) => f.name === 'xhttp-extra').input);
+    assert.equal(
+        xhttp.outbounds[0].streamSettings.xhttpSettings.extra.downloadSettings.address,
+        'download.example.invalid',
+    );
+    const trojan = proxyProfile(fixtures.valid.find((f) => f.name === 'trojan').input);
+    assert.equal(trojan.outbounds[0].settings.servers[0].password, 'p@ss:word');
+    assert.equal(trojan.outbounds[0].settings.servers[0].address, '2001:db8::1');
+});
+test('unknown URI parameters are passed through, not discarded to make JSON', () => {
+    const content = fixtures.valid.find((f) => f.name === 'unknown-parameter').input;
+    const next = { ...rules, rules: [{ ...rule, content }] };
+    const plain = mergeExtras(Buffer.from(primary), headers, next, 'ACTIVE');
+    assert.equal(plain.body.toString(), primary + '\n' + content);
+    const original = Buffer.from(JSON.stringify([vlessProfile(primary)]));
+    assert.equal(mergeExtras(original, {}, next, 'ACTIVE'), null);
+});
+test('incompatible or partially convertible replace rule cannot wipe original or valid append', () => {
+    const incompatible = fixtures.valid.find((f) => f.name === 'unknown-parameter').input;
+    const original = vlessProfile(primary);
+    const next = {
+        ...rules,
+        rules: [
+            { ...rule, content: extra + '\n' + incompatible, mode: 'replace' },
+            { ...rule, id: 'other', content: extra, mode: 'append' },
+        ],
+    };
+    const result = mergeExtras(Buffer.from(JSON.stringify([original])), {}, next, 'ACTIVE');
+    const parsed = JSON.parse(result.body);
+    assert.equal(parsed.length, 2);
+    assert.deepEqual(parsed[0], original);
 });
 test('proof requires a matching real user, known status and explicit HWID check result', () => {
     for (const status of ['ACTIVE', 'EXPIRED', 'LIMITED', 'DISABLED'])

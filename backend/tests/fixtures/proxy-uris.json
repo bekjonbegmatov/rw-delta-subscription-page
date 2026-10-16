@@ -1,0 +1,287 @@
+{
+  "valid": [
+    {
+      "name": "socks5h-no-auth",
+      "input": "socks5h://demo.example.invalid#SOCKS5H",
+      "normalized": "socks5h://demo.example.invalid#SOCKS5H",
+      "convert": true
+    },
+    {
+      "name": "http-explicit-default-port",
+      "input": "http://demo.example.invalid:80#HTTP",
+      "normalized": "http://demo.example.invalid:80#HTTP",
+      "convert": true
+    },
+    {
+      "name": "https-explicit-default-port",
+      "input": "https://demo.example.invalid:443#HTTPS",
+      "normalized": "https://demo.example.invalid:443#HTTPS",
+      "convert": true
+    },
+    {
+      "name": "http-ipv6-no-auth",
+      "input": "http://[2001:db8::1]:8080#IPv6",
+      "normalized": "http://[2001:db8::1]:8080#IPv6",
+      "convert": true
+    },
+    {
+      "name": "trojan-default-port",
+      "input": "trojan://synthetic@demo.example.invalid#Trojan",
+      "normalized": "trojan://synthetic@demo.example.invalid#Trojan",
+      "convert": true
+    },
+    {
+      "name": "unicode",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?security=tls#🇩🇪 Германия · LTE + 5G",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?security=tls#%F0%9F%87%A9%F0%9F%87%AA%20%D0%93%D0%B5%D1%80%D0%BC%D0%B0%D0%BD%D0%B8%D1%8F%20%C2%B7%20LTE%20%2B%205G",
+      "convert": true
+    },
+    {
+      "name": "certificate-pinning",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=grpc&serviceName=demo.Service&mode=gun&security=tls&fp=qq&pcs=AA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA&vcn=cert.example.invalid&ech=A+B# LTE",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=grpc&serviceName=demo.Service&mode=gun&security=tls&fp=qq&pcs=AA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA%3AAA&vcn=cert.example.invalid&ech=A+B#%20LTE",
+      "convert": true
+    },
+    {
+      "name": "transport-tcp",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=tcp#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=tcp#Demo",
+      "convert": true
+    },
+    {
+      "name": "transport-raw",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=raw#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=raw#Demo",
+      "convert": true
+    },
+    {
+      "name": "transport-ws",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=ws#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=ws#Demo",
+      "convert": true
+    },
+    {
+      "name": "transport-grpc",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=grpc#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=grpc#Demo",
+      "convert": true
+    },
+    {
+      "name": "transport-httpupgrade",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=httpupgrade#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=httpupgrade#Demo",
+      "convert": true
+    },
+    {
+      "name": "transport-xhttp",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=xhttp#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=xhttp#Demo",
+      "convert": true
+    },
+    {
+      "name": "transport-splithttp",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=splithttp#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=splithttp#Demo",
+      "convert": true
+    },
+    {
+      "name": "transport-h2",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=h2#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=h2#Demo",
+      "convert": true
+    },
+    {
+      "name": "transport-http",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=http#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=http#Demo",
+      "convert": true
+    },
+    {
+      "name": "transport-kcp",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=kcp#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=kcp#Demo",
+      "convert": true
+    },
+    {
+      "name": "transport-mkcp",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=mkcp#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=mkcp#Demo",
+      "convert": true
+    },
+    {
+      "name": "transport-quic",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=quic#Demo",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=quic#Demo",
+      "convert": true
+    },
+    {
+      "name": "xhttp-extra",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=xhttp&mode=packet-up&extra=%7B%22noGRPCHeader%22%3Atrue%2C%22downloadSettings%22%3A%7B%22network%22%3A%22xhttp%22%2C%22address%22%3A%22download.example.invalid%22%2C%22port%22%3A443%7D%7D#XHTTP",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=xhttp&mode=packet-up&extra=%7B%22noGRPCHeader%22%3Atrue%2C%22downloadSettings%22%3A%7B%22network%22%3A%22xhttp%22%2C%22address%22%3A%22download.example.invalid%22%2C%22port%22%3A443%7D%7D#XHTTP",
+      "convert": true
+    },
+    {
+      "name": "unknown-parameter",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=tcp&future=retain+exactly%2B#Future",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=tcp&future=retain+exactly%2B#Future",
+      "convert": false
+    },
+    {
+      "name": "unknown-transport",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=future#Future",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=future#Future",
+      "convert": false
+    },
+    {
+      "name": "legacy-insecure",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?security=tls&allowInsecure=1#Legacy",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?security=tls&allowInsecure=1#Legacy",
+      "convert": false
+    },
+    {
+      "name": "tcp-http-header",
+      "input": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=tcp&headerType=http&path=%2Fa,%2Fb&host=a.invalid,b.invalid#HTTP",
+      "normalized": "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?type=tcp&headerType=http&path=%2Fa,%2Fb&host=a.invalid,b.invalid#HTTP",
+      "convert": true
+    },
+    {
+      "name": "vmess-json",
+      "input": "vmess://eyJ2IjoiMiIsInBzIjoi8J+Ht/Cfh7og0JTQtdC80L4iLCJhZGQiOiJ2bWVzcy5leGFtcGxlLmludmFsaWQiLCJwb3J0IjoiNDQzIiwiaWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJhaWQiOiIwIiwic2N5IjoiYXV0byIsIm5ldCI6ImdycGMiLCJ0eXBlIjoiZ3VuIiwicGF0aCI6IkRlbW8iLCJ0bHMiOiJ0bHMiLCJwY3MiOiJBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBIn0=",
+      "normalized": "vmess://eyJ2IjoiMiIsInBzIjoi8J+Ht/Cfh7og0JTQtdC80L4iLCJhZGQiOiJ2bWVzcy5leGFtcGxlLmludmFsaWQiLCJwb3J0IjoiNDQzIiwiaWQiOiIwMDAwMDAwMC0wMDAwLTQwMDAtODAwMC0wMDAwMDAwMDAwMDEiLCJhaWQiOiIwIiwic2N5IjoiYXV0byIsIm5ldCI6ImdycGMiLCJ0eXBlIjoiZ3VuIiwicGF0aCI6IkRlbW8iLCJ0bHMiOiJ0bHMiLCJwY3MiOiJBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBIn0=",
+      "convert": true
+    },
+    {
+      "name": "vmess-aead",
+      "input": "vmess://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?security=tls&encryption=auto#VMess",
+      "normalized": "vmess://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?security=tls&encryption=auto#VMess",
+      "convert": true
+    },
+    {
+      "name": "trojan",
+      "input": "trojan://p%40ss%3Aword@[2001:db8::1]:443?type=ws&security=tls&path=%2Fws#Trojan",
+      "normalized": "trojan://p%40ss%3Aword@[2001:db8::1]:443?type=ws&security=tls&path=%2Fws#Trojan",
+      "convert": true
+    },
+    {
+      "name": "ss-base64",
+      "input": "ss://YWVzLTI1Ni1nY206c3ludGhldGljOnBhc3N3b3Jk@[2001:db8::2]:8388#SS",
+      "normalized": "ss://YWVzLTI1Ni1nY206c3ludGhldGljOnBhc3N3b3Jk@[2001:db8::2]:8388#SS",
+      "convert": true
+    },
+    {
+      "name": "ss-plain",
+      "input": "ss://2022-blake3-aes-128-gcm:synthetic%2Bpassword@ss.example.invalid:8388#SS2022",
+      "normalized": "ss://2022-blake3-aes-128-gcm:synthetic%2Bpassword@ss.example.invalid:8388#SS2022",
+      "convert": true
+    },
+    {
+      "name": "ss-legacy",
+      "input": "ss://YWVzLTI1Ni1nY206c3ludGhldGljQHNzLmV4YW1wbGUuaW52YWxpZDo4Mzg4#SS",
+      "normalized": "ss://YWVzLTI1Ni1nY206c3ludGhldGljQHNzLmV4YW1wbGUuaW52YWxpZDo4Mzg4#SS",
+      "convert": true
+    },
+    {
+      "name": "ss-plugin",
+      "input": "ss://YWVzLTI1Ni1nY206c3ludGhldGlj@ss.example.invalid:8388?plugin=obfs-local%3Bobfs%3Dhttp#Plugin",
+      "normalized": "ss://YWVzLTI1Ni1nY206c3ludGhldGlj@ss.example.invalid:8388?plugin=obfs-local%3Bobfs%3Dhttp#Plugin",
+      "convert": false
+    },
+    {
+      "name": "hysteria",
+      "input": "hysteria://synthetic@demo.example.invalid:443?future=keep#hysteria",
+      "normalized": "hysteria://synthetic@demo.example.invalid:443?future=keep#hysteria",
+      "convert": false
+    },
+    {
+      "name": "hysteria2",
+      "input": "hysteria2://synthetic@demo.example.invalid:443?future=keep#hysteria2",
+      "normalized": "hysteria2://synthetic@demo.example.invalid:443?future=keep#hysteria2",
+      "convert": false
+    },
+    {
+      "name": "hy2",
+      "input": "hy2://synthetic@demo.example.invalid:443?future=keep#hy2",
+      "normalized": "hy2://synthetic@demo.example.invalid:443?future=keep#hy2",
+      "convert": false
+    },
+    {
+      "name": "tuic",
+      "input": "tuic://synthetic@demo.example.invalid:443?future=keep#tuic",
+      "normalized": "tuic://synthetic@demo.example.invalid:443?future=keep#tuic",
+      "convert": false
+    },
+    {
+      "name": "wireguard",
+      "input": "wireguard://synthetic@demo.example.invalid:443?future=keep#wireguard",
+      "normalized": "wireguard://synthetic@demo.example.invalid:443?future=keep#wireguard",
+      "convert": false
+    },
+    {
+      "name": "wg",
+      "input": "wg://synthetic@demo.example.invalid:443?future=keep#wg",
+      "normalized": "wg://synthetic@demo.example.invalid:443?future=keep#wg",
+      "convert": false
+    },
+    {
+      "name": "anytls",
+      "input": "anytls://synthetic@demo.example.invalid:443?future=keep#anytls",
+      "normalized": "anytls://synthetic@demo.example.invalid:443?future=keep#anytls",
+      "convert": false
+    },
+    {
+      "name": "ssh",
+      "input": "ssh://synthetic@demo.example.invalid:443?future=keep#ssh",
+      "normalized": "ssh://synthetic@demo.example.invalid:443?future=keep#ssh",
+      "convert": false
+    },
+    {
+      "name": "naive+https",
+      "input": "naive+https://synthetic@demo.example.invalid:443?future=keep#naive+https",
+      "normalized": "naive+https://synthetic@demo.example.invalid:443?future=keep#naive%2Bhttps",
+      "convert": false
+    },
+    {
+      "name": "ssr",
+      "input": "ssr://c3NyLmV4YW1wbGUuaW52YWxpZDo0NDM6b3JpZ2luOmFlcy0yNTYtY2ZiOnBsYWluOmNHRnpjdz09",
+      "normalized": "ssr://c3NyLmV4YW1wbGUuaW52YWxpZDo0NDM6b3JpZ2luOmFlcy0yNTYtY2ZiOnBsYWluOmNHRnpjdz09",
+      "convert": false
+    },
+    {
+      "name": "socks",
+      "input": "socks://user:synthetic@demo.example.invalid:1080#socks",
+      "normalized": "socks://user:synthetic@demo.example.invalid:1080#socks",
+      "convert": true
+    },
+    {
+      "name": "socks5",
+      "input": "socks5://user:synthetic@demo.example.invalid:1080#socks5",
+      "normalized": "socks5://user:synthetic@demo.example.invalid:1080#socks5",
+      "convert": true
+    },
+    {
+      "name": "http",
+      "input": "http://user:synthetic@demo.example.invalid:1080#http",
+      "normalized": "http://user:synthetic@demo.example.invalid:1080#http",
+      "convert": true
+    },
+    {
+      "name": "https",
+      "input": "https://user:synthetic@demo.example.invalid:1080#https",
+      "normalized": "https://user:synthetic@demo.example.invalid:1080#https",
+      "convert": true
+    }
+  ],
+  "invalid": [
+    "not-a-link",
+    "javascript://user@demo.invalid:443",
+    "https://example.invalid",
+    "vless://@demo.invalid:443",
+    "vless://id@demo.invalid:0",
+    "vless://id@demo.invalid:65536",
+    "vless://id@demo.invalid:443?path=bad space",
+    "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?#bad%0Aline",
+    "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?#bad%FF",
+    "vless://00000000-0000-4000-8000-000000000001@demo.example.invalid:443?#bad%GG",
+    "vmess://bm90LWpzb24="
+  ]
+}
