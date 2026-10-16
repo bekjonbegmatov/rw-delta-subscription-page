@@ -33,12 +33,12 @@
 
 .appButtonActive,
 .appButtonActive:hover {
-    background: linear-gradient(90deg, rgba(34, 211, 238, 0.12) 0%, rgba(34, 211, 238, 0.04) 100%);
-    border-color: rgba(34, 211, 238, 0.2);
+    background: linear-gradient(90deg, rgba(var(--sp-accent-rgb, 34, 211, 238), 0.12) 0%, rgba(var(--sp-accent-rgb, 34, 211, 238), 0.04) 100%);
+    border-color: rgba(var(--sp-accent-rgb, 34, 211, 238), 0.2);
     border-left-color: var(--mantine-color-cyan-5);
     box-shadow:
-        inset 4px 0 12px -4px rgba(34, 211, 238, 0.3),
-        0 0 12px rgba(34, 211, 238, 0.1);
+        inset 4px 0 12px -4px rgba(var(--sp-accent-rgb, 34, 211, 238), 0.3),
+        0 0 12px rgba(var(--sp-accent-rgb, 34, 211, 238), 0.1);
 }
 
 .appButtonActive .appName {
@@ -83,7 +83,7 @@
 .appName {
     position: relative;
     z-index: 1;
-    color: rgba(255, 255, 255, 0.85);
+    color: var(--sp-text, rgba(255, 255, 255, 0.85));
     font-size: var(--mantine-font-size-md);
     font-weight: 600;
     white-space: nowrap;

@@ -16,6 +16,7 @@ import { useAppConfigStoreActions, useIsConfigLoaded } from '@entities/app-confi
 import { LoadingScreen } from '@shared/ui'
 
 import classes from './root.module.css'
+import { isAppearancePreview } from '@features/appearance/provider'
 
 export function RootLayout() {
     const subscriptionActions = useSubscriptionInfoStoreActions()
@@ -25,6 +26,14 @@ export function RootLayout() {
     const isConfigLoaded = useIsConfigLoaded()
 
     useLayoutEffect(() => {
+        if (isAppearancePreview) {
+            // Separate synthetic data path. Never fetch an actual subscription.
+            void import('@features/appearance/preview-fixture').then(({ previewConfig, previewSubscription }) => {
+                configActions.setConfig(previewConfig)
+                subscriptionActions.setSubscriptionInfo({ subscription: previewSubscription })
+            })
+            return
+        }
         const subPageDiv = document.getElementById('sbpg')
 
         if (subPageDiv) {

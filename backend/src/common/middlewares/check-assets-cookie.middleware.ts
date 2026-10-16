@@ -22,6 +22,17 @@ export function checkAssetsCookieMiddleware(
     }
 
     if (!req.cookies.session) {
+        // Synthetic preview can load static files, never the protected app-config
+        // route or any subscription endpoint. Its cookie is not a customer session.
+        if (req.cookies.appearance_preview && /^\/[a-zA-Z0-9_./-]+\.(js|css|woff2?|ttf|svg|png|jpe?g|webp|ico)$/.test(req.path)) {
+            try {
+                const preview = jwt.verify(req.cookies.appearance_preview, secret);
+                if (typeof preview === 'object' && preview.purpose === 'appearance-preview') {
+                    next();
+                    return;
+                }
+            } catch { /* Continue through the existing rejection path. */ }
+        }
         logger.debug('No session cookie found');
         res.socket?.destroy();
 

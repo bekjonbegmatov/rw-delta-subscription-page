@@ -19,6 +19,8 @@ import { AxiosService } from '@common/axios';
 import { TypedConfigService } from '@common/config/app-config';
 import { getAssetsPath, isDevelopment } from '@common/utils';
 import { decryptUuid, encryptUuid } from '@common/utils/crypt-utils';
+import { fetchAppearance } from './appearance-fetch';
+import { defaultAppearance } from './appearance-contract';
 
 @Injectable()
 export class WebpageService implements OnApplicationBootstrap {
@@ -86,6 +88,34 @@ export class WebpageService implements OnApplicationBootstrap {
         }
 
         this.logger.log('[OK] Subpage configs are loaded successfully.');
+    }
+
+    public async getAppearance() {
+        try {
+            return await fetchAppearance(this.configService.get('SUBSCRIPTION_APPEARANCE_URL'));
+        } catch {
+            // Do not retain stale announcements or log request URLs/payloads.
+            this.logger.warn('Appearance source unavailable or invalid; using default presentation.');
+            return defaultAppearance;
+        }
+    }
+
+    public serveAppearancePreview(res: Response) {
+        const origin = this.configService.get('SUBSCRIPTION_PREVIEW_ORIGIN');
+        if (!origin) throw new NotFoundException();
+        res.removeHeader('X-Frame-Options');
+        res.setHeader('Content-Security-Policy', `frame-ancestors ${origin}`);
+        res.setHeader('Cache-Control', 'no-store');
+        // Separate static-only cookie: never replace an existing subscriber session.
+        res.cookie('appearance_preview', this.jwtService.sign({ purpose: 'appearance-preview' }, { expiresIn: '30m' }), {
+            httpOnly: true, secure: !isDevelopment(),
+            sameSite: isDevelopment() ? 'lax' : 'none', maxAge: 1_800_000, path: '/assets',
+        });
+        const html = this.indexTemplate({
+            metaTitle: 'Delta · предпросмотр', metaDescription: 'Синтетический предпросмотр оформления',
+            panelData: '',
+        }).replace('</head>', `<meta name="subscription-preview-origin" content="${origin}"></head>`);
+        res.type('html').send(html);
     }
 
     public async getSubscriptionPageConfig(

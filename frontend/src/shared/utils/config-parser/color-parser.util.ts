@@ -32,6 +32,13 @@ export interface ColorGradientStyle {
 }
 
 export const getColorGradient = (color: string): ColorGradientStyle => {
+    if (color === 'cyan' || color === 'violet') {
+        const token = color === 'cyan' ? '--sp-accent-rgb, 34, 211, 238' : '--sp-secondary-rgb, 151, 117, 250'
+        return {
+            background: `linear-gradient(135deg, rgba(var(${token}), .15), rgba(var(${token}), .08))`,
+            border: `1px solid rgba(var(${token}), .3)`
+        }
+    }
     const [r, g, b] = getRgb(color)
     return {
         background: `linear-gradient(135deg, rgba(${r},${g},${b},0.15) 0%, rgba(${r},${g},${b},0.08) 100%)`,

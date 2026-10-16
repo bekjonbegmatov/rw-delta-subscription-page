@@ -17,6 +17,7 @@ import { initDayjs } from '@shared/utils/time-utils'
 import { theme } from '@shared/constants'
 
 import { Router } from './app/router/router'
+import { AppearanceProvider } from './features/appearance/provider'
 
 polyfillCountryFlagEmojis()
 
@@ -28,7 +29,7 @@ export function App() {
     const mq = useMediaQuery('(min-width: 40em)')
 
     return (
-        <DirectionProvider>
+        <AppearanceProvider><DirectionProvider>
             <MantineProvider
                 cssVariablesResolver={v8CssVariablesResolver}
                 defaultColorScheme="dark"
@@ -41,6 +42,6 @@ export function App() {
                     <Router />
                 </ModalsProvider>
             </MantineProvider>
-        </DirectionProvider>
+        </DirectionProvider></AppearanceProvider>
     )
 }

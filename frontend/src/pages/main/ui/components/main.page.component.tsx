@@ -16,6 +16,7 @@ import {
 import { useAppConfig, useAppConfigStoreActions, useCurrentLang } from '@entities/app-config-store'
 import { LanguagePicker } from '@shared/ui/language-picker/language-picker.shared'
 import { Page, RemnawaveLogo } from '@shared/ui'
+import { SubscriptionAnnouncements } from '@features/appearance/provider'
 
 interface IMainPageComponentProps {
     isMobile: boolean
@@ -67,6 +68,7 @@ export const MainPageComponent = ({ isMobile, platform }: IMainPageComponentProp
 
     return (
         <Page>
+            <SubscriptionAnnouncements />
             <Box className="header-wrapper" py="md">
                 <Container maw={1200} px={{ base: 'md', sm: 'lg', md: 'xl' }}>
                     <Group justify="space-between">

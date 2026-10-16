@@ -12,6 +12,18 @@ const booleanString = (def: 'true' | 'false' = 'false') =>
 
 const TRUST_PROXY_DEFAULT = '1';
 
+const isAppearanceUrl = (value: string | undefined, originOnly = false): boolean => {
+    if (!value) return true;
+    try {
+        const url = new URL(value);
+        return ['http:', 'https:'].includes(url.protocol)
+            && !url.username && !url.password
+            && (!originOnly || url.origin === value);
+    } catch {
+        return false;
+    }
+};
+
 const isTrustProxy = (val: string): boolean => {
     if (val === 'true' || val === 'false' || /^\d+$/.test(val)) return true;
 
@@ -39,6 +51,12 @@ export const configSchema = z
 
         SUBPAGE_CONFIG_UUID: z.string().default('00000000-0000-0000-0000-000000000000'),
         CUSTOM_SUB_PREFIX: z.optional(z.string()),
+        SUBSCRIPTION_APPEARANCE_URL: z.union([z.literal(''), z.url()]).optional()
+            .refine((value) => isAppearanceUrl(value),
+                'Use an HTTP(S) appearance URL without credentials.'),
+        SUBSCRIPTION_PREVIEW_ORIGIN: z.union([z.literal(''), z.url()]).optional()
+            .refine((value) => isAppearanceUrl(value, true),
+                'Use the exact Admin V2 origin without a path or trailing slash.'),
 
         TRUST_PROXY: z
             .string()

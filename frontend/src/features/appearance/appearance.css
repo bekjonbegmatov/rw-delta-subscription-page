@@ -1,0 +1,68 @@
+html.subscription-themed {
+    --mantine-color-body: var(--sp-background);
+    --mantine-color-text: var(--sp-text);
+    --mantine-color-dimmed: var(--sp-muted);
+    --mantine-color-white: var(--sp-text);
+    --mantine-color-dark-0: var(--sp-text);
+    --mantine-color-dark-1: var(--sp-text);
+    --mantine-color-dark-2: var(--sp-muted);
+    --mantine-color-dark-4: var(--sp-border);
+    --mantine-color-dark-5: var(--sp-surface);
+    --mantine-color-dark-6: var(--sp-surface);
+    --mantine-color-dark-7: var(--sp-background);
+    --mantine-color-cyan-0: var(--sp-accent);
+    --mantine-color-cyan-1: var(--sp-accent);
+    --mantine-color-cyan-2: var(--sp-accent);
+    --mantine-color-cyan-3: var(--sp-accent);
+    --mantine-color-cyan-4: var(--sp-accent);
+    --mantine-color-cyan-5: var(--sp-accent);
+    --mantine-color-cyan-6: var(--sp-accent);
+    --mantine-color-cyan-7: var(--sp-accent);
+    --mantine-color-cyan-8: var(--sp-accent);
+    --mantine-color-cyan-9: var(--sp-accent);
+    --mantine-color-cyan-filled: var(--sp-accent);
+    --mantine-color-cyan-light: rgba(var(--sp-accent-rgb), .14);
+    --mantine-color-cyan-light-color: var(--sp-accent);
+    --mantine-color-cyan-outline: var(--sp-accent);
+    --mantine-color-violet-4: var(--sp-secondary);
+    --mantine-color-violet-5: var(--sp-secondary);
+    --mantine-color-violet-6: var(--sp-secondary);
+    --mantine-radius-md: var(--sp-radius);
+    --mantine-radius-lg: var(--sp-radius);
+}
+html.subscription-themed, .subscription-themed body {
+    background-color: var(--sp-background);
+    background-image: var(--sp-pattern);
+    background-size: var(--sp-pattern-size);
+    color: var(--sp-text);
+}
+.subscription-themed .animated-background { background: var(--sp-gradient); }
+.subscription-themed .header-wrapper {
+    background: var(--sp-card);
+    border-color: var(--sp-border);
+}
+.subscription-themed .mantine-Card-root {
+    background: var(--sp-card);
+    border-color: var(--sp-border);
+    border-radius: var(--sp-radius);
+}
+.subscription-themed .mantine-Card-root:hover { border-color: var(--sp-accent); }
+.subscription-themed .logo-text-normal { color: var(--sp-text); }
+.subscription-themed .mantine-NativeSelect-input, .subscription-themed .mantine-Select-input,
+.subscription-themed .mantine-Menu-dropdown, .subscription-themed .mantine-Modal-content {
+    background: var(--sp-surface); color: var(--sp-text); border-color: var(--sp-border);
+}
+.sp-alerts { position: relative; z-index: 101; }
+.sp-alert { --notice: #60a5fa; display: flex; align-items: flex-start; gap: 12px; padding: 15px max(20px, calc((100% - 1120px) / 2)); background: color-mix(in srgb, var(--notice) 13%, var(--sp-surface)); border-bottom: 1px solid color-mix(in srgb, var(--notice) 40%, transparent); color: var(--sp-text); }
+.sp-alert[data-kind="success"] { --notice: #34d399; }
+.sp-alert[data-kind="warning"] { --notice: #fbbf24; }
+.sp-alert[data-kind="danger"] { --notice: #fb7185; }
+.sp-alert > div { flex: 1; min-width: 0; }
+.sp-alert strong { display: block; font-size: 13px; margin-bottom: 4px; }
+.sp-alert p { margin: 0; font-size: 12px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.sp-alert-icon { color: var(--notice); border: 1px solid currentColor; border-radius: 50%; width: 22px; height: 22px; flex: 0 0 22px; text-align: center; line-height: 20px; font-weight: bold; }
+.sp-alert button { border: 0; background: transparent; color: inherit; cursor: pointer; font-size: 24px; width: 32px; height: 32px; }
+.sp-alert button:focus-visible { outline: 2px solid var(--notice); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+    .subscription-themed *, .subscription-themed *::before { transition: none !important; animation: none !important; }
+}

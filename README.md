@@ -1,5 +1,7 @@
 ## Remnawave Subscription Page
 
+Delta Admin V2 integration: [appearance editor, live preview and alerts](docs/appearance-admin-v2.md).
+
 Learn more about Remnawave [here](https://docs.rw/).
 
 # Contributors
