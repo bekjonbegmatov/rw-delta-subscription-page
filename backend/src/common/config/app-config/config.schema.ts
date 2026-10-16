@@ -51,6 +51,10 @@ export const configSchema = z
 
         SUBPAGE_CONFIG_UUID: z.string().default('00000000-0000-0000-0000-000000000000'),
         CUSTOM_SUB_PREFIX: z.optional(z.string()),
+        FAVICON_PUBLIC_URL: z.string().max(2048).optional().refine(value => !value ||
+            (isAppearanceUrl(value) && value.startsWith('https://')), 'Use an HTTPS favicon URL without credentials.'),
+        SUBSCRIPTION_RULES_URL: z.string().optional().refine(value => isAppearanceUrl(value), 'Use an HTTP(S) internal rules URL without credentials.'),
+        SUBSCRIPTION_RULES_TOKEN: z.string().optional(),
         SUBSCRIPTION_APPEARANCE_URL: z.union([z.literal(''), z.url()]).optional()
             .refine((value) => isAppearanceUrl(value),
                 'Use an HTTP(S) appearance URL without credentials.'),
@@ -87,6 +91,10 @@ export const configSchema = z
         EGAMES_COOKIE: z.optional(z.string()),
     })
     .superRefine((data, ctx) => {
+        if (Boolean(data.SUBSCRIPTION_RULES_URL) !== Boolean(data.SUBSCRIPTION_RULES_TOKEN)
+            || (data.SUBSCRIPTION_RULES_TOKEN && data.SUBSCRIPTION_RULES_TOKEN.length < 32)) {
+            ctx.addIssue({ code: 'custom', path: ['SUBSCRIPTION_RULES_TOKEN'], message: 'Configure both rules URL and a dedicated token of at least 32 characters.' });
+        }
         if (
             !data.REMNAWAVE_PANEL_URL.startsWith('http://') &&
             !data.REMNAWAVE_PANEL_URL.startsWith('https://')

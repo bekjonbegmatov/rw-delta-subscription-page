@@ -8,6 +8,7 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 
 import {
     GetMetadataCommand,
+    GetRawSubscriptionByShortUuidCommand,
     GetSubpageConfigByShortUuidCommand,
     GetSubscriptionInfoByShortUuidCommand,
     GetSubpageConfigCommand,
@@ -278,6 +279,24 @@ export class AxiosService implements OnModuleInit {
         }
     }
 
+    public async getExtraAccess(clientIp: string, shortUuid: string, headers: IncomingHttpHeaders): Promise<unknown> {
+        // Only device identity headers; never let a subscriber override service auth.
+        const forwarded = Object.fromEntries(['x-hwid', 'x-device-os', 'x-ver-os', 'x-device-model', 'user-agent']
+            .filter(key => typeof headers[key] === 'string')
+            .map(key => [key, headers[key] as string]));
+        try {
+            const response = await this.axiosInstance.request({
+                method: 'GET', url: GetRawSubscriptionByShortUuidCommand.url(encodeURIComponent(shortUuid)),
+                params: { withDisabledHosts: 'false' }, timeout: 5000, maxRedirects: 0, maxContentLength: 8 * 1024 * 1024,
+                headers: { ...forwarded, [REMNAWAVE_REAL_IP_HEADER]: clientIp },
+            });
+            return response.data;
+        } catch {
+            this.logger.warn('Additional connections: access verification unavailable.');
+            return null;
+        }
+    }
+
     public async getSubscription(
         clientIp: string,
         shortUuid: string,
@@ -287,6 +306,7 @@ export class AxiosService implements OnModuleInit {
     ): Promise<{
         subscription: Buffer;
         headers: RawAxiosResponseHeaders;
+        status: number;
     } | null> {
         try {
             let basePath = 'api/sub/' + encodeURIComponent(shortUuid);
@@ -312,6 +332,7 @@ export class AxiosService implements OnModuleInit {
 
             return {
                 subscription: response.data,
+                status: response.status,
                 headers: Object.fromEntries(
                     Object.entries(response.headers).filter(([key]) => !IGNORED_HEADERS.has(key)),
                 ),

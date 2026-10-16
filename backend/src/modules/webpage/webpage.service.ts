@@ -21,6 +21,7 @@ import { getAssetsPath, isDevelopment } from '@common/utils';
 import { decryptUuid, encryptUuid } from '@common/utils/crypt-utils';
 import { fetchAppearance } from './appearance-fetch';
 import { defaultAppearance } from './appearance-contract';
+import { applyFavicon } from './favicon';
 
 @Injectable()
 export class WebpageService implements OnApplicationBootstrap {
@@ -41,7 +42,7 @@ export class WebpageService implements OnApplicationBootstrap {
 
     public async onApplicationBootstrap(): Promise<void> {
         this.indexTemplate = ejs.compile(
-            readFileSync(path.join(getAssetsPath(), 'index.html'), 'utf8'),
+            applyFavicon(readFileSync(path.join(getAssetsPath(), 'index.html'), 'utf8'), this.configService.get('FAVICON_PUBLIC_URL')),
         );
 
         const subscriptionPageConfigList = await this.fetchSubscriptionPageConfigList();
