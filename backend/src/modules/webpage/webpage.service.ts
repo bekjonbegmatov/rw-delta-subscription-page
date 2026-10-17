@@ -22,6 +22,7 @@ import { decryptUuid, encryptUuid } from '@common/utils/crypt-utils';
 import { fetchAppearance } from './appearance-fetch';
 import { defaultAppearance } from './appearance-contract';
 import { applyFavicon } from './favicon';
+import { RenewalService } from './renewal.service';
 
 @Injectable()
 export class WebpageService implements OnApplicationBootstrap {
@@ -35,6 +36,7 @@ export class WebpageService implements OnApplicationBootstrap {
         private readonly configService: TypedConfigService,
         private readonly axiosService: AxiosService,
         private readonly jwtService: JwtService,
+        private readonly renewalService: RenewalService,
     ) {
         this.internalJwtSecret = this.configService.getOrThrow('INTERNAL_JWT_SECRET');
         this.subpageConfigUuid = this.configService.getOrThrow('SUBPAGE_CONFIG_UUID');
@@ -97,7 +99,7 @@ export class WebpageService implements OnApplicationBootstrap {
         } catch {
             // Do not retain stale announcements or log request URLs/payloads.
             this.logger.warn('Appearance source unavailable or invalid; using default presentation.');
-            return defaultAppearance;
+            return { ...defaultAppearance, renewal_enabled: false };
         }
     }
 
@@ -259,12 +261,15 @@ export class WebpageService implements OnApplicationBootstrap {
                 maxAge: 1_800_000, // 30 minutes
             });
 
+            const renewalToken = this.renewalService.pageToken(shortUuid);
+            res.setHeader('Cache-Control', 'no-store, private');
+            res.setHeader('Referrer-Policy', 'no-referrer');
             res.type('html').send(
                 this.indexTemplate({
                     metaTitle: baseSettings.metaTitle,
                     metaDescription: baseSettings.metaDescription,
                     panelData: Buffer.from(JSON.stringify(subscriptionData)).toString('base64'),
-                }),
+                }).replace('</head>', renewalToken ? `<meta name="subscription-renewal-token" content="${renewalToken}"></head>` : '</head>'),
             );
         } catch (error) {
             this.logger.error(`Error in returnWebpage: ${error}`);

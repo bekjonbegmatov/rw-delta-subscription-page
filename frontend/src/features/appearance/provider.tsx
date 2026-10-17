@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useLayoutEffect, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useLayoutEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { appearanceSchema, defaultAppearance, themeVariables, type Announcement } from './contract'
 import './appearance.css'
 
@@ -6,7 +6,8 @@ export const isAppearancePreview = window.location.pathname === '/appearance-pre
 const Context = createContext({ config: defaultAppearance, run: 0 })
 
 export function AppearanceProvider({ children }: { children: ReactNode }) {
-    const [config, setConfig] = useState(defaultAppearance)
+    // No flash of a disabled renewal while loading; appearance failures fail closed for checkout UI.
+    const [config, setConfig] = useState(() => ({ ...defaultAppearance, renewal_enabled: isAppearancePreview }))
     const [run, setRun] = useState(0)
     useLayoutEffect(() => {
         const root = document.documentElement
@@ -43,10 +44,23 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
             .finally(() => clearTimeout(timeout))
         return () => { controller.abort(); clearTimeout(timeout) }
     }, [])
-    return <Context.Provider value={{ config, run }}>{children}</Context.Provider>
+    return <Context.Provider value={{ config, run }}><BackgroundEffect />{children}</Context.Provider>
 }
 
 export const useAppearance = () => useContext(Context).config
+
+function BackgroundEffect() {
+    const { theme } = useAppearance()
+    if (theme.effect === 'none' || theme.effect_opacity === 0) return null
+    const count = theme.effect === 'aurora' ? 3 : 32
+    return <div className="sp-effect" data-effect={theme.effect} aria-hidden="true">
+        {Array.from({ length: count }, (_, i) => <i key={i} style={{
+            '--particle-x': `${(i * 37 + 11) % 100}%`, '--particle-y': `${(i * 53 + 7) % 100}%`,
+            '--particle-size': `${2 + i % 4}px`, '--particle-drift': `${(i % 2 ? 1 : -1) * (25 + i % 5 * 12)}px`,
+            animationDelay: `${-i * 1.7}s`, animationDuration: `${(18 + i % 9 * 2) / theme.effect_speed}s`,
+        } as CSSProperties} />)}
+    </div>
+}
 
 function Banner({ alert }: { alert: Announcement }) {
     const [visible, setVisible] = useState(true)

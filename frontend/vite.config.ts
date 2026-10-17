@@ -5,11 +5,14 @@ import removeConsole from 'vite-plugin-remove-console'
 import webfontDownload from 'vite-plugin-webfont-dl'
 import { ViteEjsPlugin } from 'vite-plugin-ejs'
 import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
 import { defineConfig } from 'vite'
 import 'dotenv/config'
 
 export default defineConfig({
     plugins: [
+        // Renewal utilities are prefixed and scoped; Mantine keeps its own reset/theme.
+        tailwindcss(),
         react(),
         removeConsole(),
         webfontDownload(undefined, {}),

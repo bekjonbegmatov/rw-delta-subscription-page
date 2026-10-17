@@ -1,7 +1,7 @@
 process.title = 'rw-subpage';
 
 import cookieParser from 'cookie-parser';
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, json } from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { utilities as nestWinstonModuleUtilities, WinstonModule } from 'nest-winston';
@@ -93,6 +93,8 @@ async function bootstrap(): Promise<void> {
     app.use('/assets', cookieParser());
     app.use('/assets', checkAssetsCookieMiddleware);
 
+    // Parse this bounded POST body before headerFilter removes content-length.
+    app.use('/api/subscription-page/renewal', json({ limit: '16kb', strict: true }));
     app.use(noRobotsMiddleware, getRealIp, headerFilterMiddleware);
 
     app.use(
@@ -111,7 +113,7 @@ async function bootstrap(): Promise<void> {
         morgan(
             ':remote-addr - ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent"',
             {
-                skip: (req) => req?.url?.startsWith('/assets') ?? false,
+                skip: (req) => Boolean(req?.url?.startsWith('/assets') || req?.url?.startsWith('/api/subscription-page/renewal')),
             },
         ),
     );
@@ -119,7 +121,7 @@ async function bootstrap(): Promise<void> {
     const customSubPrefix = config.get('CUSTOM_SUB_PREFIX');
 
     app.setGlobalPrefix(customSubPrefix ?? '', { exclude: [
-        APP_CONFIG_ROUTE_WO_LEADING_PATH, 'api/subscription-page/appearance', 'appearance-preview',
+        APP_CONFIG_ROUTE_WO_LEADING_PATH, 'api/subscription-page/appearance', 'appearance-preview', 'api/subscription-page/renewal',
     ] });
 
     if (customSubPrefix) {

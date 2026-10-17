@@ -17,6 +17,7 @@ import { useAppConfig, useAppConfigStoreActions, useCurrentLang } from '@entitie
 import { LanguagePicker } from '@shared/ui/language-picker/language-picker.shared'
 import { Page, RemnawaveLogo } from '@shared/ui'
 import { SubscriptionAnnouncements } from '@features/appearance/provider'
+import { SubscriptionRenewal } from '@features/renewal/renewal'
 
 interface IMainPageComponentProps {
     isMobile: boolean
@@ -115,6 +116,8 @@ export const MainPageComponent = ({ isMobile, platform }: IMainPageComponentProp
                     {SubscriptionInfoBlockRenderer && (
                         <SubscriptionInfoBlockRenderer isMobile={isMobile} />
                     )}
+
+                    <SubscriptionRenewal />
 
                     {atLeastOnePlatformApp && (
                         <InstallationGuideConnector

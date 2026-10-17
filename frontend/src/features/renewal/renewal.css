@@ -1,0 +1,81 @@
+/* Scoped utilities/components; deliberately no global preflight reset of Mantine. */
+@layer theme, utilities;
+@import "tailwindcss/theme.css" layer(theme) prefix(rw);
+@import "tailwindcss/utilities.css" layer(utilities) prefix(rw) source(none);
+@source "./renewal.tsx";
+@plugin "daisyui" {
+    themes: false;
+    root: ".subscription-renewal";
+    prefix: "rn-";
+    include: button, card, steps, alert, radio, loading;
+    logs: false;
+}
+
+.subscription-renewal {
+    --color-base-100: var(--sp-surface, #151b2b);
+    --color-base-200: var(--sp-background, #101522);
+    --color-base-300: var(--sp-border, #30394d);
+    --color-base-content: var(--sp-text, #eef2ff);
+    --color-primary: var(--sp-accent, #57d0e8);
+    --color-primary-content: var(--sp-background, #101522);
+    --color-secondary: var(--sp-secondary, #a78bfa);
+    --color-secondary-content: var(--sp-background, #101522);
+    --color-accent: var(--sp-accent, #57d0e8);
+    --color-accent-content: var(--sp-background, #101522);
+    --color-neutral: var(--sp-border, #30394d);
+    --color-neutral-content: var(--sp-text, #eef2ff);
+    --color-info: #60a5fa;
+    --color-info-content: #10203b;
+    --color-success: #34d399;
+    --color-success-content: #062a20;
+    --color-warning: #fbbf24;
+    --color-warning-content: #302304;
+    --color-error: #fb7185;
+    --color-error-content: #390f19;
+    --radius-selector: .5rem;
+    --radius-field: .75rem;
+    --radius-box: var(--sp-radius, 1rem);
+    --size-selector: .25rem;
+    --size-field: .25rem;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+    color: var(--color-base-content);
+    background: var(--sp-card, var(--color-base-100));
+    border: 1px solid var(--color-base-300);
+    overflow: hidden;
+}
+
+.subscription-renewal *, .subscription-renewal *::before, .subscription-renewal *::after { box-sizing: border-box; }
+.subscription-renewal button, .subscription-renewal input { font: inherit; }
+.subscription-renewal h2, .subscription-renewal h3, .subscription-renewal p { margin: 0; }
+.subscription-renewal fieldset { min-width: 0; border: 0; margin: 0; padding: 0; }
+.subscription-renewal legend { padding: 0; margin-bottom: .65rem; font-size: .875rem; font-weight: 600; }
+.subscription-renewal .rw\:rn-btn { text-decoration: none; }
+.subscription-renewal .rw\:rn-steps { margin: 0; padding: 0; font-size: .8rem; list-style: none; }
+.subscription-renewal .rw\:rn-step { min-width: 0; grid-template-rows: 1.8rem auto; gap: 4px; color: var(--sp-muted); }
+.subscription-renewal .rw\:rn-step::after { width: 1.5rem; height: 1.5rem; font-size: .7rem; }
+.subscription-renewal .rw\:rn-step::before { height: 3px; }
+.subscription-renewal .rw\:rn-step[aria-current="step"] { color: var(--sp-accent); font-weight: 600; }
+.subscription-renewal .rw\:rn-step[aria-current="step"]::after { outline: 3px solid color-mix(in srgb, var(--sp-accent) 18%, transparent); }
+.subscription-renewal .renewal-step-done { color: var(--sp-text); }
+.renewal-header-icon, .renewal-payment-icon { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: var(--color-base-200); color: var(--color-accent); }
+.renewal-payment-icon { width: 42px; height: 42px; }
+.renewal-payment-icon img { display: block; object-fit: contain; border-radius: 6px; }
+.subscription-renewal .rw\:rn-alert { white-space: normal; overflow-wrap: anywhere; }
+.subscription-renewal .renewal-option {
+    border: 1px solid var(--color-base-300); border-radius: .75rem; padding: .75rem; font-size: .875rem;
+    cursor: pointer; background: var(--color-base-100); transition: border-color .15s, background .15s;
+}
+.subscription-renewal .renewal-option:has(input:checked) {
+    border-color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 8%, var(--color-base-100));
+}
+.subscription-renewal :focus-visible { outline: 2px solid var(--color-primary); outline-offset: 4px; }
+@media (max-width: 639px) {
+    .subscription-renewal .renewal-period { flex-direction: row; justify-content: space-between; align-items: center; }
+    .subscription-renewal .renewal-period > span:first-child { flex-direction: row-reverse; }
+    .subscription-renewal .renewal-header { flex-wrap: wrap; }
+    .subscription-renewal .renewal-header h2 { font-size: .9rem; }
+    .subscription-renewal .renewal-header-icon { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .subscription-renewal * { transition: none; animation: none; } }

@@ -24,8 +24,27 @@ async function upstream(t, handler) {
     return 'http://127.0.0.1:' + server.address().port;
 }
 
-test('unconfigured source uses defaults', async () => {
-    assert.deepEqual(await fetchAppearance(), defaultAppearance);
+test('unconfigured source uses safe defaults without renewal', async () => {
+    assert.deepEqual(await fetchAppearance(), { ...defaultAppearance, renewal_enabled: false });
+});
+test('appearance preserves the renewal toggle and accepts legacy effect defaults', async t => {
+    const { effect, effect_color, effect_speed, effect_opacity, ...legacyTheme } = defaultAppearance.theme;
+    const { renewal_subtitle, ...legacy } = defaultAppearance;
+    const url = await upstream(t, (_, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ ...legacy, renewal_enabled: false, theme: legacyTheme }));
+    });
+    assert.deepEqual(await fetchAppearance(url), { ...defaultAppearance, renewal_enabled: false });
+});
+test('appearance fetch preserves custom and empty renewal captions', async t => {
+    let subtitle = '🔑 Ваш ключ останется прежним';
+    const url = await upstream(t, (_, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ ...defaultAppearance, renewal_subtitle: subtitle }));
+    });
+    assert.equal((await fetchAppearance(url)).renewal_subtitle, subtitle);
+    subtitle = '';
+    assert.equal((await fetchAppearance(url)).renewal_subtitle, '');
 });
 test('appearance URLs reject malformed values, credentials and non-origin preview URLs', () => {
     const base = { REMNAWAVE_PANEL_URL: 'https://panel.example.invalid', REMNAWAVE_API_TOKEN: 'synthetic', INTERNAL_JWT_SECRET: 'synthetic' };

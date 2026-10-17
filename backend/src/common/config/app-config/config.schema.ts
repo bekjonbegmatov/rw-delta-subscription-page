@@ -55,6 +55,9 @@ export const configSchema = z
             (isAppearanceUrl(value) && value.startsWith('https://')), 'Use an HTTPS favicon URL without credentials.'),
         SUBSCRIPTION_RULES_URL: z.string().optional().refine(value => isAppearanceUrl(value), 'Use an HTTP(S) internal rules URL without credentials.'),
         SUBSCRIPTION_RULES_TOKEN: z.string().optional(),
+        SUBSCRIPTION_RENEWAL_URL: z.string().optional().refine(value => isAppearanceUrl(value), 'Use a private HTTP(S) renewal endpoint.'),
+        SUBSCRIPTION_RENEWAL_TOKEN: z.string().optional(),
+        SUBSCRIPTION_RENEWAL_PUBLIC_ORIGIN: z.string().optional().refine(value => isAppearanceUrl(value, true), 'Use the exact public subpage origin.'),
         SUBSCRIPTION_APPEARANCE_URL: z.union([z.literal(''), z.url()]).optional()
             .refine((value) => isAppearanceUrl(value),
                 'Use an HTTP(S) appearance URL without credentials.'),
@@ -91,6 +94,10 @@ export const configSchema = z
         EGAMES_COOKIE: z.optional(z.string()),
     })
     .superRefine((data, ctx) => {
+        const renewal = [data.SUBSCRIPTION_RENEWAL_URL, data.SUBSCRIPTION_RENEWAL_TOKEN, data.SUBSCRIPTION_RENEWAL_PUBLIC_ORIGIN];
+        if (renewal.some(Boolean) && (!renewal.every(Boolean) || data.SUBSCRIPTION_RENEWAL_TOKEN!.length < 32)) {
+            ctx.addIssue({ code: 'custom', path: ['SUBSCRIPTION_RENEWAL_TOKEN'], message: 'Configure renewal URL, dedicated 32+ character token and public origin together.' });
+        }
         if (Boolean(data.SUBSCRIPTION_RULES_URL) !== Boolean(data.SUBSCRIPTION_RULES_TOKEN)
             || (data.SUBSCRIPTION_RULES_TOKEN && data.SUBSCRIPTION_RULES_TOKEN.length < 32)) {
             ctx.addIssue({ code: 'custom', path: ['SUBSCRIPTION_RULES_TOKEN'], message: 'Configure both rules URL and a dedicated token of at least 32 characters.' });

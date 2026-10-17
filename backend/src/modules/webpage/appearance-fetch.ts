@@ -3,7 +3,7 @@ import { appearanceSchema, defaultAppearance } from './appearance-contract';
 
 // Dedicated client: never forward the panel token, cookies or subscriber data.
 export async function fetchAppearance(url?: string) {
-    if (!url) return defaultAppearance;
+    if (!url) return { ...defaultAppearance, renewal_enabled: false };
     const response = await axios.get(url, {
         timeout: 3000, maxContentLength: 65536, maxRedirects: 0,
         headers: { Accept: 'application/json' },
