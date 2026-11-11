@@ -48,8 +48,8 @@ export class RenewalService {
             throw new HttpException('Некорректный запрос.', 400);
         }
         const payload = body as Record<string, unknown>;
-        if (!['options', 'checkout', 'status'].includes(String(payload.action)) ||
-            Object.keys(payload).some(key => !['action', 'quote', 'method', 'request_key', 'order_id'].includes(key))) {
+        if (!['options', 'checkout', 'status', 'recurring_options', 'recurring_create', 'recurring_cancel'].includes(String(payload.action)) ||
+            Object.keys(payload).some(key => !['action', 'quote', 'method', 'request_key', 'order_id', 'recurring_id', 'confirmed'].includes(key))) {
             throw new HttpException('Некорректный запрос.', 400);
         }
         try {

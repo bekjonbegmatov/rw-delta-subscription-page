@@ -16,7 +16,7 @@ type Options = { available: boolean; tariff_name: string; offers: Offer[]; metho
 
 const pageToken = document.querySelector<HTMLMetaElement>('meta[name="subscription-renewal-token"]')?.content
 document.querySelector('meta[name="subscription-renewal-token"]')?.remove()
-const money = (value: string) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', maximumFractionDigits: 0 }).format(Number(value))
+const money = (value: string) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'RUB', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(Number(value))
 const date = (value: string) => new Date(value).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).replace(/\.$/, '')
 const period = (days: number) => `${days} ${days % 10 === 1 && days % 100 !== 11 ? 'день' : days % 10 >= 2 && days % 10 <= 4 && !(days % 100 >= 12 && days % 100 <= 14) ? 'дня' : 'дней'}`
 
@@ -219,4 +219,102 @@ export function SubscriptionRenewal() {
             </div>
         </section>
     )
+}
+
+type RecurringOffer = {
+    quote: string; name: string; mode: 'monthly' | 'period'; days: number; interval_days: number
+    first_amount: string; regular_amount: string; currency: string; consent_text: string
+}
+type RecurringSubscription = {
+    id: string | number; status: string; provider_status: string; first_amount: string; regular_amount: string
+    interval_days: number; next_charge_at: string | null; cancel_available: boolean; error_code: string; pay_link: string | null
+}
+type RecurringOptions = { enabled: boolean; offers: RecurringOffer[]; subscriptions: RecurringSubscription[] }
+const recurringStatus: Record<string, string> = {
+    pending: 'Ожидает первой оплаты', active: 'Автопродление подключено', cancelled: 'Автосписания отключены',
+    failed: 'Автопродление остановлено', uncertain: 'Нужна проверка', creating: 'Подключение обрабатывается',
+    paused: 'Автопродление приостановлено', cancelling: 'Отключение обрабатывается',
+}
+
+export function SubscriptionRecurring() {
+    const [options, setOptions] = useState<RecurringOptions | null>(null)
+    const [offer, setOffer] = useState<RecurringOffer | null>(null)
+    const [consent, setConsent] = useState(false)
+    const [busy, setBusy] = useState(false)
+    const [error, setError] = useState('')
+    const [recoverOnly, setRecoverOnly] = useState(false)
+    const [cancelId, setCancelId] = useState<string | number | null>(null)
+    const inFlight = useRef(false)
+    const mutationKeys = useRef(new Map<string, string>())
+    const keyFor = (action: string) => {
+        if (!mutationKeys.current.has(action)) mutationKeys.current.set(action, crypto.randomUUID())
+        return mutationKeys.current.get(action)!
+    }
+    const load = async () => {
+        if (inFlight.current) return
+        inFlight.current = true; setBusy(true); setError('')
+        try {
+            const result = await api<RecurringOptions>({ action: 'recurring_options' })
+            setOptions(result); setOffer(null); setConsent(false); setCancelId(null)
+            // An empty lookup cannot prove that an earlier timed-out creation failed.
+        } catch (cause) { setError(cause instanceof Error ? cause.message : 'Не удалось проверить автопродление.') }
+        finally { inFlight.current = false; setBusy(false) }
+    }
+    const mutate = async (action: 'recurring_create' | 'recurring_cancel') => {
+        if (inFlight.current || (action === 'recurring_create' && (!offer || !consent || recoverOnly)) ||
+            (action === 'recurring_cancel' && cancelId === null)) return
+        inFlight.current = true; setBusy(true); setError('')
+        const identity = action === 'recurring_create' ? offer!.quote : String(cancelId)
+        try {
+            const result = await api<RecurringSubscription>({ action, confirmed: true, request_key: keyFor(`${action}:${identity}`),
+                ...(action === 'recurring_create' ? { quote: offer!.quote } : { recurring_id: cancelId }) })
+            setOptions(current => ({ enabled: false, offers: [], subscriptions: [result,
+                ...(current?.subscriptions.filter(item => item.id !== result.id) ?? [])] }))
+            setOffer(null); setConsent(false); setCancelId(null)
+        } catch (cause) {
+            if (action === 'recurring_create') setRecoverOnly(true)
+            setError(cause instanceof Error ? cause.message : 'Результат неизвестен. Проверьте состояние или обратитесь в поддержку.')
+        } finally { inFlight.current = false; setBusy(false) }
+    }
+    // Remains accessible when creation or the one-off renewal block is disabled.
+    if (!pageToken || isAppearancePreview) return null
+    return <section className="subscription-renewal rw:rn-card" aria-labelledby="recurring-heading">
+        <div className="rw:rn-card-body rw:gap-4 rw:p-4 rw:sm:p-5">
+            <h2 id="recurring-heading" className="rw:rn-card-title rw:text-base">Автопродление через СБП</h2>
+            <p className="rw:text-sm rw:text-base-content/70">Условия первого и следующих платежей показываем перед подключением. Автосписания можно отключить здесь.</p>
+            <button type="button" className="rw:rn-btn rw:self-start" disabled={busy} onClick={() => void load()}>{options ? 'Проверить автопродление' : 'Настроить автопродление'}</button>
+            {busy && <p role="status">Проверяем запрос…</p>}
+            {error && <div className="rw:rn-alert rw:rn-alert-warning rw:rn-alert-soft" role="alert">{error}</div>}
+            {recoverOnly && <p className="rw:text-sm" role="status">Не создавайте повторный автоплатёж. Проверьте состояние или обратитесь в поддержку.</p>}
+            {options?.subscriptions.map(item => <div key={item.id} className="rw:space-y-3 rw:border-t rw:border-base-300 rw:pt-3">
+                <h3 className="rw:font-semibold">{recurringStatus[item.status.toLowerCase()] ?? 'Состояние требует проверки'}</h3>
+                <p>{money(item.regular_amount)} каждые {period(item.interval_days)}.</p>
+                {item.next_charge_at && <p>Следующее списание: {date(item.next_charge_at)}.</p>}
+                {item.error_code && <p role="status">Нужна проверка поддержкой. Не подключайте повторный автоплатёж.</p>}
+                {safePaymentLink(item.pay_link) && <a className="rw:rn-btn" href={safePaymentLink(item.pay_link)} target="_blank" rel="noopener noreferrer" referrerPolicy="no-referrer">Оплатить первый период</a>}
+                {item.cancel_available && <button type="button" className="rw:rn-btn" disabled={busy} onClick={() => setCancelId(item.id)}>Отключить автосписания</button>}
+                {cancelId === item.id && <div className="rw:space-y-3"><p>Отключить будущие списания? Уже оплаченный доступ сохранится.</p>
+                    <div className="rw:flex rw:flex-col rw:gap-2 rw:sm:flex-row">
+                        <button type="button" className="rw:rn-btn" disabled={busy} onClick={() => void mutate('recurring_cancel')}>Подтверждаю отключение</button>
+                        <button type="button" className="rw:rn-btn" disabled={busy} onClick={() => setCancelId(null)}>Оставить автопродление</button>
+                    </div></div>}
+            </div>)}
+            {options && !options.enabled && !options.subscriptions.length && <p role="status">Подключение автоплатежей пока недоступно.</p>}
+            {options?.enabled && !recoverOnly && <>
+                <fieldset disabled={busy}><legend>Выберите условия автопродления</legend>
+                    <div className="rw:grid rw:grid-cols-1 rw:gap-3 rw:sm:grid-cols-2">
+                        {options.offers.map(item => <label className="renewal-option rw:flex rw:items-start rw:gap-3" key={item.quote}>
+                            <input type="radio" className="rw:rn-radio rw:rn-radio-sm rw:shrink-0" name="recurring-offer" checked={offer?.quote === item.quote} onChange={() => { setOffer(item); setConsent(false) }} />
+                            <span className="rw:space-y-1"><strong>{item.name}</strong><span className="rw:block">Первый период: {money(item.first_amount)}.</span><span className="rw:block">Далее {money(item.regular_amount)} каждые {period(item.interval_days)}.</span></span>
+                        </label>)}
+                    </div>
+                </fieldset>
+                {offer && <>
+                    <p className="rw:text-sm">{offer.consent_text}</p>
+                    <label className="rw:flex rw:items-start rw:gap-3"><input className="rw:rn-checkbox rw:rn-checkbox-sm rw:shrink-0" type="checkbox" checked={consent} disabled={busy} onChange={event => setConsent(event.target.checked)} /><span>Согласен на первый платёж {money(offer.first_amount)} и автоматические списания {money(offer.regular_amount)} каждые {period(offer.interval_days)}.</span></label>
+                    <button type="button" className="rw:rn-btn rw:self-start" disabled={!consent || busy} onClick={() => void mutate('recurring_create')}>Подключить и оплатить первый период</button>
+                </>}
+            </>}
+        </div>
+    </section>
 }
