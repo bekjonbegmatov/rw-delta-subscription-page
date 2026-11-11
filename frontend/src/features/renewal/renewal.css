@@ -7,7 +7,7 @@
     themes: false;
     root: ".subscription-renewal";
     prefix: "rn-";
-    include: button, card, steps, alert, radio, loading;
+    include: button, card, steps, alert, radio, checkbox, loading;
     logs: false;
 }
 

@@ -24,7 +24,7 @@ Module._load = function(id, parent, main) {
     if (id === '@entities/subscription-info-store/subscription-info-store') return { useSubscriptionInfoStore: { getState: () => store } };
     return originalLoad.call(this, id, parent, main);
 };
-const { SubscriptionRenewal } = require('../src/features/renewal/renewal.tsx');
+const { SubscriptionRecurring, SubscriptionRenewal } = require('../src/features/renewal/renewal.tsx');
 Module._load = originalLoad;
 
 const options = {
@@ -156,4 +156,60 @@ test('unsafe method images are never requested', async t => {
         methods: [{ ...options.methods[0], icon_url: 'javascript:alert(1)' }] })));
     await choose();
     assert.equal(document.querySelector('.renewal-payment-icon img'), null);
+});
+
+const recurringOptions = { enabled: true, offers: [{ quote: 'signed-recurring', name: 'Месячный', mode: 'monthly',
+    days: 30, interval_days: 30, first_amount: '10.50', regular_amount: '200.00', currency: 'RUB', consent_text: 'Согласие на автоматические списания.' }], subscriptions: [] };
+const agreement = { id: 5, status: 'pending', provider_status: 'PENDING', first_amount: '10.50', regular_amount: '200.00', interval_days: 30,
+    next_charge_at: null, cancel_available: true, error_code: '', pay_link: 'https://pay.example.invalid/first-cycle' };
+const recurringRender = async () => React.act(async () => root.render(React.createElement(SubscriptionRecurring)));
+
+test('recurring terms require explicit consent and send a server quote without client amounts', async t => {
+    const seen = [];
+    t.mock.method(global, 'fetch', async (_, init) => {
+        const body = JSON.parse(init.body); seen.push(body);
+        return new Response(JSON.stringify(body.action === 'recurring_options' ? recurringOptions : agreement));
+    });
+    await recurringRender(); await click('Настроить автопродление');
+    await React.act(async () => document.querySelector('input[name="recurring-offer"]').click());
+    assert.match(document.body.textContent, /10,5/); assert.match(document.body.textContent, /200/);
+    assert.equal(button('Подключить и оплатить первый период').disabled, true);
+    await React.act(async () => document.querySelector('input[type="checkbox"]').click());
+    await React.act(async () => { button('Подключить и оплатить первый период').click(); button('Подключить и оплатить первый период').click(); });
+    const requests = seen.filter(item => item.action === 'recurring_create');
+    assert.equal(requests.length, 1); assert.equal(requests[0].quote, 'signed-recurring');
+    assert.equal(requests[0].confirmed, true); assert.equal(requests[0].amount, undefined);
+    assert.equal(requests[0].short_uuid, undefined); assert.equal(document.querySelector('a').href, agreement.pay_link);
+    assert.equal(updated, null);
+});
+
+test('recurring creation timeout blocks duplicate even after empty status recovery', async t => {
+    let creates = 0;
+    t.mock.method(global, 'fetch', async (_, init) => {
+        const body = JSON.parse(init.body);
+        if (body.action === 'recurring_create') { creates++; throw new Error('Связь прервана'); }
+        return new Response(JSON.stringify(recurringOptions));
+    });
+    await recurringRender(); await click('Настроить автопродление');
+    await React.act(async () => document.querySelector('input[name="recurring-offer"]').click());
+    await React.act(async () => document.querySelector('input[type="checkbox"]').click());
+    await click('Подключить и оплатить первый период'); await click('Проверить автопродление');
+    assert.match(document.body.textContent, /Не создавайте повторный автоплатёж/);
+    assert.equal(button('Подключить и оплатить первый период'), undefined);
+    assert.equal(document.querySelector('input[name="recurring-offer"]'), null); assert.equal(creates, 1);
+});
+
+test('existing recurring can be cancelled with explicit confirmation while new creation is disabled', async t => {
+    renewalEnabled = false;
+    const seen = [];
+    t.mock.method(global, 'fetch', async (_, init) => {
+        const body = JSON.parse(init.body); seen.push(body);
+        return new Response(JSON.stringify(body.action === 'recurring_options'
+            ? { enabled: false, offers: [], subscriptions: [{ ...agreement, status: 'active', pay_link: null }] }
+            : { ...agreement, status: 'cancelled', provider_status: 'CANCELLED', pay_link: null, cancel_available: false }));
+    });
+    await recurringRender(); await click('Настроить автопродление'); await click('Отключить автосписания');
+    assert.equal(seen.length, 1); await click('Подтверждаю отключение');
+    assert.equal(seen[1].recurring_id, 5); assert.equal(seen[1].confirmed, true);
+    assert.match(document.body.textContent, /Автосписания отключены/); assert.equal(updated, null);
 });

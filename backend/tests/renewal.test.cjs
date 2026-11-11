@@ -149,3 +149,17 @@ test('real Nest POST parses JSON before the header filter and works with custom 
     assert.equal((await post(JSON.stringify({ action: 'options', oversized: 'a'.repeat(17000) }))).status, 413);
     assert.equal(fetch.mock.callCount(), 1);
 });
+
+test('recurring requests retain page identity and never allow caller amounts or another subscription', async t => {
+    const service = make(), token = service.pageToken('synthetic-recurring');
+    const seen = [];
+    t.mock.method(global, 'fetch', async (_, init) => { seen.push(JSON.parse(init.body)); return new Response('{}'); });
+    await service.request(request(token), { action: 'recurring_options' });
+    await service.request(request(token), { action: 'recurring_create', quote: 'signed', confirmed: true, request_key: '00000000-0000-0000-0000-000000000001' });
+    await service.request(request(token), { action: 'recurring_cancel', recurring_id: 7, confirmed: true, request_key: '00000000-0000-0000-0000-000000000002' });
+    assert.deepEqual(seen.map(item => item.short_uuid), Array(3).fill('synthetic-recurring'));
+    for (const extra of [{ amount: 1 }, { subscription_id: 99 }, { user_id: 99 }, { short_uuid: 'other' }]) {
+        await assert.rejects(service.request(request(token), { action: 'recurring_create', ...extra }), e => e.getStatus() === 400);
+    }
+    assert.equal(seen.length, 3);
+});
